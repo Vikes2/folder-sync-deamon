@@ -12,8 +12,23 @@ void printDirectoryContent(DIR *dir)
     struct dirent *entry;
     while((entry = readdir(dir)) != NULL)
     {
-        if(strcmp(entry->d_name, ".") != 0 || strcmp(entry->d_name, "..") != 0)
+        if(strcmp(entry->d_name, ".") != 0 || strcmp(entry->d_name, "..") != 0) //xd
         printf("%s -> %d\n", entry->d_name, entry->d_type);
+    }
+}
+
+void loadData(List * list, DIR * dir)
+{
+    struct dirent *entry;
+    while((entry = readdir(dir)) != NULL)
+    {
+        if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
+        {
+            if(entry->d_type == 4)
+                add(entry->d_name, 1, list);
+            else
+                add(entry->d_name, 0, list);
+        }
     }
 }
 
@@ -26,6 +41,13 @@ int main(int argc, char** argv)
 
     DIR *source = opendir(sourceDirName);
     DIR *dest = opendir(destinationDirName);
+
+    List * list = emptylist();
+
+    loadData(list, source);
+    display(list);
+    destroy(list);
+
 
     #pragma region  Directory verification
     /**
@@ -64,8 +86,8 @@ int main(int argc, char** argv)
     // printf("\n%d",find);
     // destroy(list);
     #pragma endregion
-    
-    printDirectoryContent(source);
+
+   // printDirectoryContent(source);
 
     closedir(source);
     closedir(dest);
