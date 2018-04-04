@@ -6,6 +6,10 @@
 #include <dirent.h>
 #include <string.h>
 #include "list.h"
+#include "copy.h"
+#include "sync.h"
+
+int initParams(char* source, char* destination, int* time, size_t* size, int* isRecursive);
 
 void printDirectoryContent(DIR *dir)
 {
@@ -17,28 +21,54 @@ void printDirectoryContent(DIR *dir)
     }
 }
 
-void loadData(List * list, DIR * dir)
+
+
+int initParams(char* source, char* destination, int* time, size_t* size, int* isRecursive)
 {
-    struct dirent *entry;
-    while((entry = readdir(dir)) != NULL)
-    {
-        if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
-        {
-            if(entry->d_type == 4)
-                add(entry->d_name, 1, list);
-            else
-                add(entry->d_name, 0, list);
-        }
-    }
+    return 1;
+}
+
+void fallAsleep(int time)
+{
+    return;
 }
 
 int main(int argc, char** argv)
 {
 
 
-    char* sourceDirName = argv[1];
-    char* destinationDirName = argv[2];
+    char* sourceDirPath = argv[1];
+    char* destinationDirPath = argv[2];
+    int time = 300;
+    size_t sizeTH = 1073741824;
+    int isRecursive = 0;
 
+    if(initParams(sourceDirPath, destinationDirPath, &time, &sizeTH, &isRecursive) == 0)
+    {
+        return 1;
+    }
+
+    for(;;)
+    {
+        fallAsleep(time);
+        if(isRecursive=0)
+        {
+            if(syncFiles(sourceDirPath, destinationDirPath, sizeTH) == 0)
+            {
+                return 1;
+            }
+        }
+        else
+        {
+            if(syncRecursive(sourceDirPath, destinationDirPath, sizeTH) == -1)
+            {
+                return 1;
+            }        
+        }
+    }
+
+
+    /*
     DIR *source = opendir(sourceDirName);
     DIR *dest = opendir(destinationDirName);
 
@@ -47,7 +77,7 @@ int main(int argc, char** argv)
     loadData(list, source);
     display(list);
     destroy(list);
-
+    */
 
     #pragma region  Directory verification
     /**
@@ -89,7 +119,7 @@ int main(int argc, char** argv)
 
    // printDirectoryContent(source);
 
-    closedir(source);
-    closedir(dest);
+    //closedir(source);
+    //closedir(dest);
     return 0;
 }   
