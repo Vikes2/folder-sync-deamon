@@ -34,7 +34,7 @@ void display(List * list)
   printf("%s %d, ", current->fileName, current->fileType);
 }
 
-void add(const char* _fileName, int _fileType, List * list)
+void add(char* _fileName, int _fileType, List * list)
 {
   Node * current = NULL;
   if(list->head == NULL)

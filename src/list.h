@@ -14,7 +14,7 @@ typedef struct list
 } List;
 
 List * emptylist();
-void add(const char* _fileName, int _fileType, List * list);
+void add(char* _fileName, int _fileType, List * list);
 
 int valueExists(const char* _fileName, List * list);
 
@@ -22,3 +22,4 @@ void display(List * list);
 
 void destroy(List * list);
 
+ 
