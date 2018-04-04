@@ -7,18 +7,19 @@ LDIR =lib
 
 LIBS=-lm
 
-_DEPS = list.h
+_DEPS = list.h sync.h copy.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
-_OBJ = list.o main.o
+_OBJ = main.o list.o sync.o copy.o
 OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
+sync: $(OBJ)
+	gcc -o $@ $^ $(CFLAGS) $(LIBS)
 
 $(ODIR)/%.o: $(IDIR)/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-sync: $(OBJ)
-	gcc -o $@ $^ $(CFLAGS) $(LIBS)
+
 
 .PHONY: clean
 

@@ -6,7 +6,6 @@
 #include <dirent.h>
 #include <string.h>
 #include "list.h"
-#include "copy.h"
 #include "sync.h"
 
 int initParams(char* source, char* destination, int* time, size_t* size, int* isRecursive);
