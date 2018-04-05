@@ -15,11 +15,13 @@ OBJ = $(patsubst %,$(ODIR)/%,$(_OBJ))
 
 sync: $(OBJ)
 	gcc -o $@ $^ $(CFLAGS) $(LIBS)
+	gcc -o test/sync $^ $(CFLAGS) $(LIBS)
+
+test: $(OBJ)
+	gcc -o test/sync $^ $(CFLAGS) $(LIBS)
 
 $(ODIR)/%.o: $(IDIR)/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
-
-
 
 .PHONY: clean
 
