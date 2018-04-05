@@ -19,9 +19,11 @@ typedef struct list
 List * emptylist();
 void add(char* _fileName, int _fileType, List * list);
 
-int valueExists(const char* _fileName, List * list);
+int valueExists(char* _fileName, int _fileType, List * list);
 
 void display(List * list);
+void deleteElement(char* _fileName, List* list);
+Node * popElement(List * list);
 
 void destroy(List * list);
 

@@ -34,7 +34,7 @@ void fallAsleep(int time)
 
 int main(int argc, char** argv)
 {
-
+    printf("tarararara");
 
     char* sourceDirPath = argv[1];
     char* destinationDirPath = argv[2];
@@ -42,28 +42,20 @@ int main(int argc, char** argv)
     size_t sizeTH = 1073741824;
     int isRecursive = 0;
 
-    if(initParams(sourceDirPath, destinationDirPath, &time, &sizeTH, &isRecursive) == 0)
-    {
-        return 1;
-    }
 
-    for(;;)
+    if(isRecursive == 0)
     {
-        fallAsleep(time);
-        if(isRecursive=0)
+        if(syncFiles(sourceDirPath, destinationDirPath, sizeTH) == 0)
         {
-            if(syncFiles(sourceDirPath, destinationDirPath, sizeTH) == 0)
-            {
-                return 1;
-            }
+            return 1;
         }
-        else
+    }
+    else
+    {
+        if(syncRecursive(sourceDirPath, destinationDirPath, sizeTH) == -1)
         {
-            if(syncRecursive(sourceDirPath, destinationDirPath, sizeTH) == -1)
-            {
-                return 1;
-            }        
-        }
+            return 1;
+        }        
     }
 
 
@@ -107,13 +99,24 @@ int main(int argc, char** argv)
     // add("ddd",4,list);
     // add("eee",5,list);
     // add("fff",6,list);
+
+    // printf("\n");
     
     // display(list);
-    // int find = valueExists("bbb",list);
-    // printf("\n%d",find);
-    // find = valueExists("bbs",list);
-    // printf("\n%d",find);
-    // destroy(list);
+    // printf("\n");
+    // deleteElement("ccaa",list);
+    // display(list);
+    // printf("\n");
+
+    // Node * element ;
+    // element = popElement(list);
+    // printf("%s ", element->fileName);
+
+    // free(element);
+
+    // display(list);
+    // printf("\n");
+
     #pragma endregion
 
    // printDirectoryContent(source);

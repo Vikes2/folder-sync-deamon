@@ -52,18 +52,43 @@ void add(char* _fileName, int _fileType, List * list)
   }
 }
 
-int valueExists(const char* _fileName, List * list)
+void deleteElement(char* _fileName, List* list)
+{
+  Node * current = list->head;
+  Node * previous = current;
+  if(strcmp(current->fileName,_fileName) == 0)
+  {
+    list->head = current->next;
+    free(current);
+    return;
+  }
+  current= current->next;
+  while(current != NULL)
+  {
+     if(strcmp(current->fileName,_fileName) == 0)
+    {
+      previous->next=current->next;
+      free(current);
+      return;
+    }
+    previous=current;
+    current=current->next;
+  }
+}
+
+
+int valueExists(char* _fileName, int _fileType, List * list)
 {
   Node * current = list->head;
   if(list->head == NULL)
     return 0;
   while(current->next != NULL)
   {
-    if(strcmp(current->fileName,_fileName) ==0)
+    if(strcmp(current->fileName,_fileName) ==0 && current->fileType == _fileType)
       return 1;
     current= current->next;
   }
-  if(strcmp(current->fileName,_fileName) ==0)
+  if(strcmp(current->fileName,_fileName) ==0 && current->fileType == _fileType)
       return 1;
 
   return 0;
@@ -79,7 +104,18 @@ void destroy(List * list)
     free(current);
     current = next;
   }
-
    free(list);
+}
 
+
+Node * popElement(List * list)
+{
+  if(list->head == NULL)
+    return NULL;
+  Node * result = createnode(list->head->fileName,list->head->fileType);
+  Node * elem = list->head;
+  list->head = elem->next;
+  free(elem);
+  return result;
+  
 }
