@@ -8,7 +8,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <dirent.h>
+#include "sync.h"
 
 int copyFile(char*, char*);
+int copyDirectory(char *, char *);
 
 #endif

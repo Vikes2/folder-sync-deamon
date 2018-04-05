@@ -49,3 +49,27 @@ int copyFile(char* sourceFile, char*destinationFile)
     close(destination);
     free(buffer);
 }
+
+int copyDirectory(char *sourceDirectory, char* destinationDirectory)
+{
+    int destDir = mkdir(destinationDirectory, 0777);
+
+    if(destDir == -1)
+    {
+        printf("przypal");
+    }
+
+    DIR *source = opendir(sourceDirectory);
+
+    struct dirent *entry;
+
+    while((entry = readdir(source)) != NULL)
+    {
+        if(entry->d_type == 8){
+            char *sourcePath = mergeStrings(sourceDirectory, entry->d_name);
+        char *destPath = mergeStrings(destinationDirectory, entry->d_name);
+        copyFile(sourcePath, destPath);
+        }
+    }
+
+}

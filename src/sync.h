@@ -13,5 +13,6 @@
 
 int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH);
 int syncRecursive(char* sourceDirPath, char* destinationDirPath, size_t sizeTH);
+char* mergeStrings(char* string1, char* string2);
 
 #endif

@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include "list.h"
 #include "sync.h"
+#include "copy.h"
 
 int initParams(int argc, char** argv, char* source, char* destination, int* time, size_t* size, int* isRecursive);
 
@@ -81,6 +82,8 @@ int main(int argc, char** argv)
        exit(EXIT_FAILURE);
     }
 
+    copyDirectory("a", "c");
+
     if(isRecursive == 0)
     {
         if(syncFiles(sourceDirPath, destinationDirPath, sizeTH) == 0)
@@ -90,7 +93,7 @@ int main(int argc, char** argv)
     }
     else
     {
-       return 1;
+        return 1;
     }
 
     /*
