@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
+#include <errno.h>
 #include "list.h"
 
 int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH);

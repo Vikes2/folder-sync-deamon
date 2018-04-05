@@ -11,49 +11,61 @@ void loadData(List * list, DIR * dir)
     {
         if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
         {
-            if(entry->d_type == 4)
-                add(entry->d_name, 1, list);
-            else
-                add(entry->d_name, 0, list);//hh
+
+          add(entry->d_name, entry->d_type, list);//hh
         }
     }
 }
 
+char* mergeStrings(char* string1, char* string2)
+{
+    char* result = (char *) malloc(2+ strlen(string1) + strlen(string2));
+    strcpy(result,string1);
+    strcat(result,"/");
+    strcat(result,string2);
+    printf("%s",result);
+    return result;
+}
 
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list)
 {
-    //return: 0 the same, 1 diffrent
+    //return: 0 the same, 1 diffrent, -1 no file
     if(valueExists(element->fileName,element->fileType,list) ==0)
     {
         return 1;
     }
     struct stat sb;
     struct stat db;
-    char* pathSource = (char *) malloc(1+strlen(sourceDirPath) + strlen(element->fileName));
-    char* pathDestination = (char *) malloc(1+strlen(destinationDirPath) + strlen(element->fileName));
-    strcpy(pathSource,sourceDirPath);
-    strcpy(pathDestination,sourceDirPath);
-    strcat(pathSource,element->fileName);
-    strcat(pathDestination,element->fileName);
+    char* pathSource = mergeStrings(sourceDirPath,element->fileName);
+    char* pathDestination = mergeStrings(destinationDirPath,element->fileName);
 
-
-    if( stat(pathSource,&sb) == 0 && stat(pathDestination,&db) == 0)
+    if(stat(pathSource,&sb) == 0)
     {
-        // sb.st_mtime:time_t
-        if(sb.st_mtime == db.st_mtime)
+        if(stat(pathDestination,&db) == 0)
         {
-            return 0;
-        }else
-        {
-            return 1;
+            if(sb.st_mtime == db.st_mtime)
+            {
+                return 0;
+            }else
+            {
+                return 1;
+            }
         }
-
-    }else
-    {
-        // to think about it
-        return 0;
-        printf("stat went wrong");
+        else
+        {
+            if(errno == ENOENT)
+            {
+                // nie ma pliku w dest
+                return -1;
+            }
+        }
     }
+    else
+    {
+        exit(EXIT_FAILURE);
+    }
+
+
    
 }
 
@@ -68,14 +80,53 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH)
     loadData(listS, source);
     loadData(listD, dest);
 
+    if(listS == NULL && listD == NULL)
+        return 0;
+
     display(listS);
+    printf("\n");
     display(listD);
-    if(compare(sourceDirPath,destinationDirPath, popElement(listS),listD) == 0)
-        printf("\ntakie same");
-    else
-        printf("\nnie=");
+
+    Node * current;
+
+    while(listS != NULL)
+    {
+        current = popElement(listS);
+        int compareStatus = compare(sourceDirPath,destinationDirPath,current, listD);
+        if( compareStatus == 0)
+        {
+            //object the same
+
+            deleteElement(current->fileName,listD);
+            continue;
+        }else if (compareStatus == -1)
+        {
+            //nie ma pliku w dest
+            if(current->fileType == 4) //if(directory)
+            {
+                if(1)//if(isRecursive)
+                {
+                    //copy all
+                }else
+                {
+                    continue;
+                }
+
+            }else
+            {
+                //copy file
+            }
+
+        }else
+        {
+            //pliki sa rozne
+            printf("\nnie=");
+        }
+    }
 
 
+
+   
 
 
     destroy(listS);

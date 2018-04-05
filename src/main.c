@@ -90,16 +90,7 @@ int main(int argc, char** argv)
     }
     else
     {
-        {
-            return 1;
-        }
-    }
-    else
-    {
-        if(syncRecursive(sourceDirPath, destinationDirPath, sizeTH) == -1)
-        {
-            return 1;
-        }        
+       return 1;
     }
 
     /*
