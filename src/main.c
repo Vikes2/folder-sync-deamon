@@ -11,14 +11,15 @@
 #include "sync.h"
 #include "copy.h"
 
-int initParams(int argc, char** argv, char* source, char* destination, int* time, size_t* size, int* isRecursive);
+int initParams(int argc, char** argv, char** source, char** destination, int* time, size_t* size, int* isRecursive);
+
 
 int initParams(int argc, char** argv, char* source, char* destination, int* time, size_t* size, int* isRecursive)
 {
     int opt;
 
-    source = argv[1];
-    destination = argv[2];
+    *source = argv[1];
+    *destination = argv[2];
 
     if(argc < 3) //at least 3 arguments are necessary, e.g. ./sync source destination 
     {
@@ -26,7 +27,7 @@ int initParams(int argc, char** argv, char* source, char* destination, int* time
         exit(EXIT_FAILURE);
     }
 
-    if(strcmp(source, destination) == 0) // source and destination have to be different directories
+    if(strcmp(*source, *destination) == 0) // source and destination have to be different directories
     {
         fprintf(stderr, "Source and destination paths are the same\n");
         exit(EXIT_FAILURE);
@@ -59,10 +60,10 @@ int main(int argc, char** argv)
     char* sourceDirPath;
     char* destinationDirPath;
     int time = 300;
-    size_t sizeTH = 1073741824;
+    size_t sizeTh = 1073741824;
     int isRecursive = 0;
 
-    if(initParams(argc, argv, sourceDirPath, destinationDirPath, &time, &sizeTH, &isRecursive) >= argc)
+    if(initParams(argc, argv, &sourceDirPath, &destinationDirPath, &time, &sizeTh, &isRecursive) >= argc)
     {
        fprintf(stderr, "Expected argument after options\n");
        exit(EXIT_FAILURE);

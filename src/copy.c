@@ -113,6 +113,7 @@ int standardCopyFile(char* sourceFile, char*destinationFile)
 }
 
 int copyFile(char *_sourcePath, char *_destPath, char *fileName, int sizeTh)
+<<<<<<< HEAD
 {
     struct stat sb;
     char *sourcePath = mergeStrings(_sourcePath, fileName);
@@ -139,8 +140,7 @@ int copyDirectory(char *_sourceDirectoryPath, char* _destinationDirectoryPath, c
 
     if(destDir == -1)
     {
-        rmdir(destinationDirectoryPath);
-        destDir = mkdir(destinationDirectoryPath, 0777);
+        return -1;
     }
 
     DIR *source = opendir(sourceDirectoryPath);
@@ -149,8 +149,13 @@ int copyDirectory(char *_sourceDirectoryPath, char* _destinationDirectoryPath, c
 
     while((entry = readdir(source)) != NULL)
     {
-        if(entry->d_type == 8){
+        if(entry->d_type == 8)
+        {
             copyFile(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh);
+        }
+        else if(entry->d_type == 4)
+        {
+            copyDirectory(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh);
         }
     }
 
