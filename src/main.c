@@ -13,18 +13,6 @@
 
 int initParams(int argc, char** argv, char* source, char* destination, int* time, size_t* size, int* isRecursive);
 
-void printDirectoryContent(DIR *dir)
-{
-    struct dirent *entry;
-    while((entry = readdir(dir)) != NULL)
-    {
-        if(strcmp(entry->d_name, ".") != 0 || strcmp(entry->d_name, "..") != 0) //xd
-        printf("%s -> %d\n", entry->d_name, entry->d_type);
-    }
-}
-
-
-
 int initParams(int argc, char** argv, char* source, char* destination, int* time, size_t* size, int* isRecursive)
 {
     int opt;
@@ -68,8 +56,6 @@ int initParams(int argc, char** argv, char* source, char* destination, int* time
 
 int main(int argc, char** argv)
 {
-
-
     char* sourceDirPath;
     char* destinationDirPath;
     int time = 300;
@@ -81,84 +67,12 @@ int main(int argc, char** argv)
        fprintf(stderr, "Expected argument after options\n");
        exit(EXIT_FAILURE);
     }
-
-    //copyDirectory("a", "c");
-
-    // if(isRecursive == 0)
-    // {
-    //     if(syncFiles(sourceDirPath, destinationDirPath, sizeTH) == 0)
-    //     {
-    //         return 1;
-    //     }
-    // }
-    // else
-    // {
-    //     return 1;
-    // }
-
-    /*
-    DIR *source = opendir(sourceDirName);
-    DIR *dest = opendir(destinationDirName);
-
-    List * list = emptylist();
-
-    loadData(list, source);
-    display(list);
-    destroy(list);
-    */
-
-    #pragma region  Directory verification
-    /**
-     
-     * Weryfikacja katalogów
-    
-    if(!source)
+    if(syncFiles(argv[1], argv[2], sizeTH, 1) == -1)
     {
-        perror(sourceDirName);
-        return 1;
+        printf("sync wrong\n");
+        return 0;
     }
 
-    if(!dest)
-    {
-        perror(destinationDirName);
-        return 1;
-    }
 
-    */
-    #pragma endregion comment
-
-    #pragma region Linked list testing
-
-    // List * list = emptylist();
-    // add("aaa",1,list);
-    // add("bbb",2,list);
-    // add("ccc",3,list);
-    // add("ddd",4,list);
-    // add("eee",5,list);
-    // add("fff",6,list);
-
-    // printf("\n");
-    
-    // display(list);
-    // printf("\n");
-    // deleteElement("ccaa",list);
-    // display(list);
-    // printf("\n");
-
-    // Node * element ;
-    // element = popElement(list);
-    // printf("%s ", element->fileName);
-
-    // free(element);
-
-    // display(list);
-    // printf("\n");
-
-    #pragma endregion
-
-   // printDirectoryContent(source);
-
-    //closedir(source);
-    //closedir(dest);
     return 0;
 }   

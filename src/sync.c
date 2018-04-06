@@ -73,30 +73,33 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int 
     char* pathSource;
     char* pathDestination;
 
-    
-
     Node * current;
 
-    while(listS != NULL)
+    while(listS->head != NULL)
     {
         current = popElement(listS);
         int compareStatus = compare(sourceDirPath, destinationDirPath, current, listD);
         if( compareStatus == 0)
         {
+
             //objects the same
         }else if (compareStatus == -1) //nie ma obiektu w dest
         {
+
             if(current->fileType == 4) // czy Directory
             {
+
                 if(isRecursive == 1)// czy cp wszystko czy tylko files
                 {
-                    //copy whole Director
+
+                    //copy whole Directory
                     if(copyDirectory(sourceDirPath, destinationDirPath, current->fileName, sizeTH) == -1)
                     {
                         // ------------------------------------------------------------------------error
                         ret = -1;
                     }
                 }
+
 
             }else                     // zwkly plik cp dla -1
             {
@@ -140,9 +143,9 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int 
                 }
             }
         }
+
         deleteElement(current->fileName,listD);
         free(current);
-
     }
 
     destroy(listS);
@@ -152,9 +155,4 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int 
     closedir(dest);
 
     return ret;
-}
-
-int syncRecursive(char* sourceDirPath, char* destinationDirPath, size_t sizeTH)
-{
-
 }

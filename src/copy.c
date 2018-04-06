@@ -67,7 +67,7 @@ int standardCopyFile(char* sourceFile, char*destinationFile)
     int source = open(sourceFile, O_RDONLY);
     int destination = open(destinationFile, O_CREAT | O_WRONLY | O_TRUNC, 0644);
 
-    printf("test");
+    //printf("test");
 
     if(!source || !destination)
     {
@@ -105,7 +105,7 @@ int standardCopyFile(char* sourceFile, char*destinationFile)
         }
     }
 
-    printf("test");
+    //printf("test");
 
     close(source);
     close(destination);

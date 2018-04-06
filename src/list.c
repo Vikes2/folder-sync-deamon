@@ -54,6 +54,10 @@ void add(char* _fileName, int _fileType, List * list)
 
 void deleteElement(char* _fileName, List* list)
 {
+  if(list == NULL || list->head == NULL)
+  {
+    return;
+  }
   Node * current = list->head;
   Node * previous = current;
   if(strcmp(current->fileName,_fileName) == 0)
