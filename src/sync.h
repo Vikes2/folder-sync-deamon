@@ -10,9 +10,9 @@
 #include <string.h>
 #include <errno.h>
 #include "list.h"
+#include "copy.h"
 
-int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH);
-int syncRecursive(char* sourceDirPath, char* destinationDirPath, size_t sizeTH);
+int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int IsRecursive);
 char* mergeStrings(char* string1, char* string2);
 
 #endif
