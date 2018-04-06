@@ -32,45 +32,34 @@ int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List *
     //return: 0 the same, 1 diffrent, -1 no file
     if(valueExists(element->fileName,element->fileType,list) ==0)
     {
-        return 1;
+        return -1;
     }
     struct stat sb;
     struct stat db;
     char* pathSource = mergeStrings(sourceDirPath,element->fileName);
     char* pathDestination = mergeStrings(destinationDirPath,element->fileName);
 
-    if(stat(pathSource,&sb) == 0)
+    if(stat(pathSource,&sb) == 0 && stat(pathDestination,&db) == 0)
     {
-        if(stat(pathDestination,&db) == 0)
+
+        if(sb.st_mtime == db.st_mtime)
         {
-            if(sb.st_mtime == db.st_mtime)
-            {
-                return 0;
-            }else
-            {
-                return 1;
-            }
-        }
-        else
+            return 0;
+        }else
         {
-            if(errno == ENOENT)
-            {
-                // nie ma pliku w dest
-                return -1;
-            }
+            return 1;
         }
-    }
-    else
+    }else
     {
         exit(EXIT_FAILURE);
     }
-
-
    
 }
 
-int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH)
+int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int isRecursive)
 {
+    int ret = 0;
+
 	DIR *source = opendir(sourceDirPath);
     DIR *dest = opendir(destinationDirPath);
 
@@ -81,11 +70,12 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH)
     loadData(listD, dest);
 
     if(listS == NULL && listD == NULL)
-        return 0;
+        return ret;
 
-    display(listS);
-    printf("\n");
-    display(listD);
+    char* pathSource;
+    char* pathDestination;
+
+    
 
     Node * current;
 
@@ -95,33 +85,66 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH)
         int compareStatus = compare(sourceDirPath,destinationDirPath,current, listD);
         if( compareStatus == 0)
         {
-            //object the same
-
-            deleteElement(current->fileName,listD);
-            continue;
-        }else if (compareStatus == -1)
+            //objects the same
+        }else if (compareStatus == -1) //nie ma obiektu w dest
         {
-            //nie ma pliku w dest
-            if(current->fileType == 4) //if(directory)
+            if(current->fileType == 4) // czy Directory
             {
-                if(1)//if(isRecursive)
+                if(isRecursive == 1)// czy cp wszystko czy tylko files
                 {
-                    //copy all
-                }else
-                {
-                    continue;
+                    //copy whole Director
+                    if(copyDirectory(sourceDirPath, destinationDirPath, current->fileName, sizeTH) == -1)
+                    {
+                        // ------------------------------------------------------------------------error
+                        ret = -1;
+                    }
                 }
 
-            }else
+            }else                     // zwkly plik cp dla -1
             {
-                //copy file
+                if(copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH)== -1)
+                {
+                    //===============================================================================error add syslog
+                    //go next
+                    ret = -1;
+
+                }
             }
 
-        }else
+        }else // obiekty są ale są rozne (1)
         {
-            //pliki sa rozne
-            printf("\nnie=");
+            if(current->fileType == 4) // czy Directory
+            {
+                if(isRecursive == 1)
+                {
+                    pathSource = mergeStrings(sourceDirPath,current->fileName);
+                    pathDestination = mergeStrings(destinationDirPath,current->fileName);
+                    if(syncFiles(pathSource, pathDestination, sizeTH, isRecursive) == -1)
+                    {
+                        //====================================error
+                        ret = -1;
+
+                    }
+                    //ustawic nowa date modify
+                    //
+                    //
+                    //go next
+                }
+            }
+            else
+            {
+
+                if(copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH)== -1)
+                {
+                    //===============================================================error
+                    ret = -1;
+
+                }
+            }
         }
+        deleteElement(current->fileName,listD);
+        free(current);
+
     }
 
 
@@ -135,7 +158,7 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH)
     closedir(source);
     closedir(dest);
 
-    return 0;
+    return ret;
 }
 
 int syncRecursive(char* sourceDirPath, char* destinationDirPath, size_t sizeTH)

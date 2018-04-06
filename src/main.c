@@ -86,7 +86,7 @@ int main(int argc, char** argv)
 
     if(isRecursive == 0)
     {
-        if(syncFiles(sourceDirPath, destinationDirPath, sizeTH) == 0)
+        if(syncFiles(sourceDirPath, destinationDirPath, sizeTH, isRecursive) == 0)
         {
             return 1;
         }

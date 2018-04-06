@@ -11,7 +11,7 @@
 #include <errno.h>
 #include "list.h"
 
-int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH);
+int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int IsRecursive);
 int syncRecursive(char* sourceDirPath, char* destinationDirPath, size_t sizeTH);
 char* mergeStrings(char* string1, char* string2);
 
