@@ -84,11 +84,11 @@ int valueExists(char* _fileName, int _fileType, List * list)
     return 0;
   while(current->next != NULL)
   {
-    if(strcmp(current->fileName,_fileName) ==0 && current->fileType == _fileType)
+    if(strcmp(current->fileName,_fileName) == 0 && current->fileType == _fileType)
       return 1;
     current= current->next;
   }
-  if(strcmp(current->fileName,_fileName) ==0 && current->fileType == _fileType)
+  if(strcmp(current->fileName,_fileName) == 0 && current->fileType == _fileType)
       return 1;
 
   return 0;

@@ -9,9 +9,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/mman.h>
 #include "sync.h"
 
-int copyFile(char*, char*);
-int copyDirectory(char *, char *);
+int copyFile(char *, char *, char *, int);
+int mmapCopyFile(char *, char *);
+int standardCopyFile(char *, char *);
+int copyDirectory(char *, char *, char *, int);
 
 #endif
