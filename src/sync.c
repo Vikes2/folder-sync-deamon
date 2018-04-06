@@ -3,7 +3,6 @@
 
 void loadData(List * list, DIR * dir);
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list);
-  
 void loadData(List * list, DIR * dir)
 {
     struct dirent *entry;
@@ -11,8 +10,7 @@ void loadData(List * list, DIR * dir)
     {
         if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
         {
-
-          add(entry->d_name, entry->d_type, list);//hh
+          add(entry->d_name, entry->d_type, list);
         }
     }
 }
@@ -23,14 +21,14 @@ char* mergeStrings(char* string1, char* string2)
     strcpy(result,string1);
     strcat(result,"/");
     strcat(result,string2);
-    printf("%s",result);
+    //printf("%s",result);
     return result;
 }
 
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list)
 {
     //return: 0 the same, 1 diffrent, -1 no file
-    if(valueExists(element->fileName,element->fileType,list) ==0)
+    if(valueExists(element->fileName,element->fileType,list) == 0)
     {
         return 1;
     }
@@ -39,9 +37,9 @@ int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List *
     char* pathSource = mergeStrings(sourceDirPath,element->fileName);
     char* pathDestination = mergeStrings(destinationDirPath,element->fileName);
 
-    if(stat(pathSource,&sb) == 0)
+    if(stat(pathSource, &sb) == 0)
     {
-        if(stat(pathDestination,&db) == 0)
+        if(stat(pathDestination, &db) == 0)
         {
             if(sb.st_mtime == db.st_mtime)
             {
@@ -92,12 +90,12 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH)
     while(listS != NULL)
     {
         current = popElement(listS);
-        int compareStatus = compare(sourceDirPath,destinationDirPath,current, listD);
+        int compareStatus = compare(sourceDirPath, destinationDirPath, current, listD);
         if( compareStatus == 0)
         {
             //object the same
 
-            deleteElement(current->fileName,listD);
+            deleteElement(current->fileName, listD);
             continue;
         }else if (compareStatus == -1)
         {
@@ -123,11 +121,6 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH)
             printf("\nnie=");
         }
     }
-
-
-
-   
-
 
     destroy(listS);
     destroy(listD);

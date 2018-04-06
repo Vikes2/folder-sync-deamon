@@ -70,8 +70,8 @@ int main(int argc, char** argv)
 {
 
 
-    char* sourceDirPath = argv[1];
-    char* destinationDirPath = argv[2];
+    char* sourceDirPath;
+    char* destinationDirPath;
     int time = 300;
     size_t sizeTH = 1073741824;
     int isRecursive = 0;
@@ -82,19 +82,19 @@ int main(int argc, char** argv)
        exit(EXIT_FAILURE);
     }
 
-    copyDirectory("a", "c");
+    //copyDirectory("a", "c");
 
-    if(isRecursive == 0)
-    {
-        if(syncFiles(sourceDirPath, destinationDirPath, sizeTH) == 0)
-        {
-            return 1;
-        }
-    }
-    else
-    {
-        return 1;
-    }
+    // if(isRecursive == 0)
+    // {
+    //     if(syncFiles(sourceDirPath, destinationDirPath, sizeTH) == 0)
+    //     {
+    //         return 1;
+    //     }
+    // }
+    // else
+    // {
+    //     return 1;
+    // }
 
     /*
     DIR *source = opendir(sourceDirName);
