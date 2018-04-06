@@ -113,7 +113,6 @@ int standardCopyFile(char* sourceFile, char*destinationFile)
 }
 
 int copyFile(char *_sourcePath, char *_destPath, char *fileName, int sizeTh)
-<<<<<<< HEAD
 {
     struct stat sb;
     char *sourcePath = mergeStrings(_sourcePath, fileName);

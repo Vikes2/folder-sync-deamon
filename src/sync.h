@@ -12,7 +12,7 @@
 #include "list.h"
 #include "copy.h"
 
-int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int IsRecursive);
+int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTh, int IsRecursive);
 char* mergeStrings(char* string1, char* string2);
 
 #endif

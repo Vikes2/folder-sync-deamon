@@ -14,7 +14,7 @@
 int initParams(int argc, char** argv, char** source, char** destination, int* time, size_t* size, int* isRecursive);
 
 
-int initParams(int argc, char** argv, char* source, char* destination, int* time, size_t* size, int* isRecursive)
+int initParams(int argc, char** argv, char** source, char** destination, int* time, size_t* size, int* isRecursive)
 {
     int opt;
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv)
        fprintf(stderr, "Expected argument after options\n");
        exit(EXIT_FAILURE);
     }
-    if(syncFiles(argv[1], argv[2], sizeTH, 1) == -1)
+    if(syncFiles(argv[1], argv[2], sizeTh, 1) == -1)
     {
         printf("sync wrong\n");
         return 0;
