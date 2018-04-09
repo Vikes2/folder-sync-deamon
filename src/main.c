@@ -68,7 +68,7 @@ int main(int argc, char** argv)
        fprintf(stderr, "Expected argument after options\n");
        exit(EXIT_FAILURE);
     }
-    if(syncFiles(argv[1], argv[2], sizeTh, 1) == -1)
+    if(syncFiles(sourceDirPath, destinationDirPath, sizeTh, isRecursive) == -1)
     {
         printf("sync wrong\n");
         return 0;

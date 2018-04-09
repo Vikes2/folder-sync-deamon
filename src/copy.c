@@ -7,6 +7,7 @@ int mmapCopyFile(char *sourceFile, char *destinationFile)
     size_t fileSize;
     int *sc, *dc;
 
+    // If error occurred during opening a source file, return -1.
     if((source = open(sourceFile, O_RDONLY)) == -1)
     {
         perror(sourceFile);
@@ -16,62 +17,69 @@ int mmapCopyFile(char *sourceFile, char *destinationFile)
     fstat(source, &sb);
     fileSize = sb.st_size;
 
-    printf("%ld\n", fileSize);
-
+    //If error occurred during opening a destination file, return -1.
     if((dest = open(destinationFile, O_CREAT | O_RDWR | O_TRUNC, sb.st_mode)) == -1)
     {
         perror(destinationFile);
         return -1;   
     }
 
-    // fileSize = lseek(source, 0, SEEK_END);
-    // lseek(dest, fileSize - 1, SEEK_SET);
-    // write(dest, '\0', 1);
-
+    //If error occurred during mapping a source file to the memory, return -1.
     if((sc = mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, source, 0)) == MAP_FAILED)
     {
         fprintf(stderr, "Error mapping source file: %s\n", sourceFile);
         return -1;
     }
 
+    if(ftruncate(dest, fileSize) == -1)
+    {
+        return -1;
+    }
+
+    //If error occurred during mapping a destination file to the memory, return -1.
     if((dc = mmap(NULL, fileSize, PROT_READ | PROT_WRITE, MAP_SHARED, dest, 0)) == MAP_FAILED)
     {
         fprintf(stderr, "Error mapping destination file: %s\n", destinationFile);
         return -1;
     }
 
-    if (ftruncate(dest, fileSize) == -1) {  //  Zmień rozmiar pliku docelowego na rozmiaru pliku źródłowego
-        //syslog(LOG_ERR, "ftruncate(): \"%s\" (%s)", destPath, strerror(errno));
-        return -1;
-    }
-
+    //If error occurred during copying files, return -1.
     if(memcpy(dc, sc, fileSize) == NULL)
     {
         perror("d");
         return -1;
     }
+
     munmap(sc, fileSize);
     munmap(dc, fileSize);
 
-    printf("EH");
+    close(source);
+    close(dest);
 
     return fileSize;
 }
 
-int standardCopyFile(char* sourceFile, char*destinationFile)
+int standardCopyFile(char *sourceFile, char *destinationFile)
 {
-    size_t bytesRead;
-    size_t bytesWritten;
+    int source, destination;
+    size_t bytesRead, bytesWritten;
     char *buffer;
+    struct stat sb;
 
-    int source = open(sourceFile, O_RDONLY);
-    int destination = open(destinationFile, O_CREAT | O_WRONLY | O_TRUNC, 0644);
-
-    //printf("test");
-
-    if(!source || !destination)
+    //If an error occurred during opening source file, return -1.
+    if((source = open(sourceFile, O_RDONLY)) == -1)
     {
-        return 1;
+        fprintf(stderr, "Error opening source file %s\n", sourceFile);
+        return -1;
+    }
+
+    fstat(source, &sb);
+
+    //If an error occurred during opening destination file, return -1.
+    if((destination = open(destinationFile, O_CREAT | O_WRONLY | O_TRUNC, sb.st_mode)) == -1)
+    {
+        fprintf(stderr, "Error opening destination file %s\n", destinationFile);
+        return -1;
     }
 
     buffer = malloc(sizeof(char) * 131072);
@@ -100,12 +108,10 @@ int standardCopyFile(char* sourceFile, char*destinationFile)
 
         if(bytesWritten != bytesRead)
         {
-            printf("something went wrong.\n");
+            fprintf(stderr, "Error while copying files %s to %s\n", sourceFile, destinationFile);
             return -1;
         }
     }
-
-    //printf("test");
 
     close(source);
     close(destination);
@@ -120,42 +126,58 @@ int copyFile(char *_sourcePath, char *_destPath, char *fileName, int sizeTh)
 
     stat(sourcePath, &sb);
 
+    //If file's size is larger than sizeTh, use mmap copy.
     if(sb.st_size >= sizeTh)
     {
-        mmapCopyFile(sourcePath, destPath);
+        if((mmapCopyFile(sourcePath, destPath)) != -1)
+        {
+            syncFilesDate(sourcePath, destPath);
+            return 0;
+        }
     }
     else
     {
-        standardCopyFile(sourcePath, destPath);
+        if((standardCopyFile(sourcePath, destPath)) != -1)
+        {
+            syncFilesDate(sourcePath, destPath);
+            return 0;
+        }
     }
 }
 
 int copyDirectory(char *_sourceDirectoryPath, char* _destinationDirectoryPath, char *directoryName, int sizeTh)
 {
+    int destDir;
+    struct dirent *entry;
+    struct stat sb;
+    DIR *source;
+
     char *sourceDirectoryPath = mergeStrings(_sourceDirectoryPath, directoryName);
     char *destinationDirectoryPath = mergeStrings(_destinationDirectoryPath, directoryName);
     
-    int destDir = mkdir(destinationDirectoryPath, 0777);
+    stat(sourceDirectoryPath, &sb);
 
-    if(destDir == -1)
+    if((destDir = mkdir(destinationDirectoryPath, sb.st_mode)) == -1)
     {
         return -1;
     }
 
-    DIR *source = opendir(sourceDirectoryPath);
-
-    struct dirent *entry;
+    source = opendir(sourceDirectoryPath);
 
     while((entry = readdir(source)) != NULL)
     {
+        //If current element is a file
         if(entry->d_type == 8)
         {
             copyFile(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh);
         }
+        //If current element is a directory
         else if(entry->d_type == 4)
         {
             copyDirectory(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh);
         }
     }
+
+    syncFilesDate(sourceDirectoryPath, destinationDirectoryPath);
 
 }

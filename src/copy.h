@@ -4,13 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/mman.h>
-#include "sync.h"
+#include "util.h"
 
 int copyFile(char *, char *, char *, int);
 int mmapCopyFile(char *, char *);

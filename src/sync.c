@@ -15,16 +15,6 @@ void loadData(List * list, DIR * dir)
     }
 }
 
-char* mergeStrings(char* string1, char* string2)
-{
-    char* result = (char *) malloc(2+ strlen(string1) + strlen(string2));
-    strcpy(result,string1);
-    strcat(result,"/");
-    strcat(result,string2);
-    //printf("%s",result);
-    return result;
-}
-
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list)
 {
     //return: 0 the same, 1 diffrent, -1 no file
