@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <syslog.h>
 #include "list.h"
 #include "sync.h"
 #include "copy.h"
@@ -18,8 +19,36 @@ int initParams(int argc, char** argv, char** source, char** destination, int* ti
 {
     int opt;
 
+    DIR *dir;
+
     *source = argv[1];
     *destination = argv[2];
+
+    if((dir = opendir(*source)) == NULL)
+    {
+        if(errno == ENOTDIR){
+            fprintf(stderr, "%s is not a directory\n", *source);
+            exit(EXIT_FAILURE);
+        }
+
+        fprintf(stderr, "%s is not a valid directory\n", *source);
+        exit(EXIT_FAILURE);
+    }
+
+    closedir(dir);
+
+    if(( dir = opendir(*destination)) == NULL)
+    {
+        if(errno == ENOTDIR){
+            fprintf(stderr, "%s is not a directory\n", *destination);
+            exit(EXIT_FAILURE);
+        }
+
+        fprintf(stderr, "%s is not a valid directory\n", *destination);
+        exit(EXIT_FAILURE);
+    }
+
+    closedir(dir);
 
     if(argc < 3) //at least 3 arguments are necessary, e.g. ./sync source destination 
     {
@@ -68,6 +97,11 @@ int main(int argc, char** argv)
        fprintf(stderr, "Expected argument after options\n");
        exit(EXIT_FAILURE);
     }
+
+    //openlog("test", LOG_PID, LOG_USER);
+    syslog(LOG_INFO, "Start logging");
+    closelog();
+
     if(syncFiles(sourceDirPath, destinationDirPath, sizeTh, isRecursive) == -1)
     {
         printf("sync wrong\n");
