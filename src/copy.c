@@ -123,7 +123,7 @@ int standardCopyFile(char *sourceFile, char *destinationFile)
     close(destination);
     free(buffer);
 
-    syslog(LOG_ERR, "Copying %s to %s succeed.", sourceFile, destinationFile);
+    syslog(LOG_INFO, "Copying %s to %s succeed.", sourceFile, destinationFile);
     return fileSize;
 }
 
@@ -157,6 +157,7 @@ int copyFile(char *_sourcePath, char *_destPath, char *fileName, int sizeTh)
 int copyDirectory(char *_sourceDirectoryPath, char* _destinationDirectoryPath, char *directoryName, int sizeTh)
 {
     int destDir;
+    int ret;
     struct dirent *entry;
     struct stat sb;
     DIR *source;
@@ -171,6 +172,8 @@ int copyDirectory(char *_sourceDirectoryPath, char* _destinationDirectoryPath, c
         return -1;
     }
 
+    ret = 0;
+
     source = opendir(sourceDirectoryPath);
 
     while((entry = readdir(source)) != NULL)
@@ -178,21 +181,28 @@ int copyDirectory(char *_sourceDirectoryPath, char* _destinationDirectoryPath, c
         //If current element is a file
         if(entry->d_type == 8)
         {
-            copyFile(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh);
+            if((copyFile(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh)) == -1)
+            {
+                ret = -1;
+            }
         }
         //If current element is a directory
         else if(entry->d_type == 4)
         {
-            if((copyDirectory(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh)) != -1)
-            {
-                syslog(LOG_INFO, "Copying %s to %s succeed.", sourceDirectoryPath, destinationDirectoryPath);
-            }
-            else{
-                syslog(LOG_ERR, "Copying %s to %s failed: directory exitsts.", sourceDirectoryPath, destinationDirectoryPath);
-            }
+            copyDirectory(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh);
         }
     }
 
     syncFilesDate(sourceDirectoryPath, destinationDirectoryPath);
 
+    if(ret == 0)
+    {
+        syslog(LOG_INFO, "Copying directory %s succeed.", sourceDirectoryPath);
+
+    }
+    else
+    {
+        syslog(LOG_ERR, "Copying directory %s failed: Eror occured during copying content of directory.", sourceDirectoryPath);    
+    }
+    return ret;
 }

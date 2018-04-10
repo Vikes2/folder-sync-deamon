@@ -90,6 +90,7 @@ int main(int argc, char** argv)
 {
     pid_t pid;
     int i;
+    int ret;
     char* sourceDirPath;
     char* destinationDirPath;
     int time = 300;
@@ -101,11 +102,11 @@ int main(int argc, char** argv)
        fprintf(stderr, "Expected argument after options\n");
        exit(EXIT_FAILURE);
     }
-
+    ret = 0;
     pid = fork();
     if(pid == -1)
     {
-        return -1;
+        return 1;
     }
     else if(pid != 0)
     {
@@ -114,7 +115,7 @@ int main(int argc, char** argv)
 
     if(setsid() == -1)
     {
-        return -1;
+        return 1;
     }
 
     for(i = 0; i <  sysconf(_SC_OPEN_MAX); i++)
@@ -135,12 +136,14 @@ int main(int argc, char** argv)
         if(syncFiles(sourceDirPath, destinationDirPath, sizeTh, isRecursive) == -1)
         {
             syslog(LOG_ERR, "Synchronization failed.");
-            return 0;
+            ret = 1;
+            break;
         }
 
+        syslog(LOG_INFO, "Deamon is awaiting...");
         sleep(time);
     }
 
     closelog();
-    return 0;
+    return ret;
 }   
