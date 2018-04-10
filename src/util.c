@@ -23,3 +23,45 @@ int syncFilesDate(char *sourcePath, char *destPath)
 		return -1;
 	}
 }
+
+void loadData(List * list, DIR * dir)
+{
+    struct dirent *entry;
+    while((entry = readdir(dir)) != NULL)
+    {
+        if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0
+        && (entry->d_type == 4 ||entry->d_type == 8)        )
+        {
+          add(entry->d_name, entry->d_type, list);
+        }
+    }
+}
+
+
+int removeWholeList(char *path, List * list)
+{
+    Node *current;
+    char* fullPath;
+    int ret = 0;
+    while(list->head != NULL)
+    {
+        current = popElement(list);
+        fullPath= mergeStrings(path, current->fileName);
+        if(current->fileType != 4)
+        {
+            remove(fullPath);
+        }
+        else
+        {
+            DIR *next = opendir(fullPath);
+            List * subList = emptylist();
+            loadData(subList, next);
+            ret= removeWholeList(fullPath, subList);
+            remove(fullPath);
+            destroy(subList);
+            closedir(next);
+        } 
+    }
+    
+    return ret;
+}

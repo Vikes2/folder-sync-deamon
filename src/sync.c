@@ -1,19 +1,9 @@
 #include "sync.h"
 
 
-void loadData(List * list, DIR * dir);
+
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list);
-void loadData(List * list, DIR * dir)
-{
-    struct dirent *entry;
-    while((entry = readdir(dir)) != NULL)
-    {
-        if(strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0)
-        {
-          add(entry->d_name, entry->d_type, list);
-        }
-    }
-}
+
 
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list)
 {
@@ -116,10 +106,7 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int 
                         ret = -1;
 
                     }
-                    //ustawic nowa date modify
-                    //
-                    //
-                    //go next
+                    syncFilesDate(pathSource, pathDestination);
                 }
             }
             else
@@ -137,6 +124,9 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int 
         deleteElement(current->fileName,listD);
         free(current);
     }
+
+
+    removeWholeList(destinationDirPath, listD);
 
     destroy(listS);
     destroy(listD);
