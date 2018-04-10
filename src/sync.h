@@ -9,6 +9,7 @@
 #include <dirent.h>
 #include <string.h>
 #include <errno.h>
+#include <syslog.h>
 #include "list.h"
 #include "copy.h"
 

@@ -7,7 +7,7 @@ int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List *
 
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list)
 {
-    //return: 0 the same, 1 diffrent, -1 no file
+    //return: 0 the same, 1 diffrent, -1 no file, 2 error
     if(valueExists(element->fileName,element->fileType,list) == 0)
     {
         return -1;
@@ -21,15 +21,13 @@ int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List *
     {
 
         if(sb.st_mtime == db.st_mtime)
-        {
             return 0;
-        }else
-        {
+        else
             return 1;
-        }
     }else
     {
-        exit(EXIT_FAILURE);
+        syslog(LOG_ERR, "Cannot get access to file.");
+        return 2;
     }
    
 }
@@ -39,7 +37,17 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int 
     int ret = 0;
 
 	DIR *source = opendir(sourceDirPath);
+    if (source == NULL)
+    {
+        syslog(LOG_ERR, "Error occurred during opening %s.", sourceDirPath);
+        return -1;
+    }
     DIR *dest = opendir(destinationDirPath);
+    if (dest == NULL)
+    {
+        syslog(LOG_ERR, "Error occurred during opening %s.", destinationDirPath);
+        return -1;
+    }
 
     List * listS = emptylist();
     List * listD = emptylist();
@@ -59,40 +67,24 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int 
     {
         current = popElement(listS);
         int compareStatus = compare(sourceDirPath, destinationDirPath, current, listD);
-        if( compareStatus == 0)
+        if (compareStatus == -1) //nie ma obiektu w dest
         {
-
-            //objects the same
-        }else if (compareStatus == -1) //nie ma obiektu w dest
-        {
-
             if(current->fileType == 4) // czy Directory
             {
 
                 if(isRecursive == 1)// czy cp wszystko czy tylko files
                 {
-
                     //copy whole Directory
-                    if(copyDirectory(sourceDirPath, destinationDirPath, current->fileName, sizeTH) == -1)
-                    {
-                        // ------------------------------------------------------------------------error
-                        ret = -1;
-                    }
+                    ret = copyDirectory(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
                 }
 
 
             }else                     // zwkly plik cp dla -1
             {
-                if(copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH)== -1)
-                {
-                    //===============================================================================error add syslog
-                    //go next
-                    ret = -1;
-
-                }
+                ret = copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
             }
 
-        }else // obiekty są ale są rozne (1)
+        }else if(compareStatus == 1) // obiekty są ale są rozne (1)
         {
             if(current->fileType == 4) // czy Directory
             {
@@ -100,33 +92,22 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int 
                 {
                     pathSource = mergeStrings(sourceDirPath,current->fileName);
                     pathDestination = mergeStrings(destinationDirPath,current->fileName);
-                    if(syncFiles(pathSource, pathDestination, sizeTH, isRecursive) == -1)
-                    {
-                        //====================================error
-                        ret = -1;
-
-                    }
+                    ret = syncFiles(pathSource, pathDestination, sizeTH, isRecursive);
                     syncFilesDate(pathSource, pathDestination);
                 }
             }
             else
             {
-
-                if(copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH)== -1)
-                {
-                    //===============================================================error
-                    ret = -1;
-
-                }
+                ret = copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
             }
-        }
+        }else if( compareStatus == 2)
+            ret = -1;
 
         deleteElement(current->fileName,listD);
         free(current);
     }
 
-
-    removeWholeList(destinationDirPath, listD);
+    ret = removeWholeList(destinationDirPath, listD);
 
     destroy(listS);
     destroy(listD);

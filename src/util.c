@@ -49,15 +49,30 @@ int removeWholeList(char *path, List * list)
         fullPath= mergeStrings(path, current->fileName);
         if(current->fileType != 4)
         {
-            remove(fullPath);
+            if(remove(fullPath) == -1)
+            {
+                syslog(LOG_ERR, "Deleting %s failed: Error occurred during deleting.", fullPath);
+                ret = -1;
+            }else
+                syslog(LOG_INFO, "Deleting %s succesed.", fullPath);
         }
         else
         {
             DIR *next = opendir(fullPath);
+            if (next == NULL)
+            {
+                syslog(LOG_ERR, "Deleting %s failed: Error occurred during opening %s.", fullPath, fullPath);
+                return -1;
+            }
             List * subList = emptylist();
             loadData(subList, next);
             ret= removeWholeList(fullPath, subList);
-            remove(fullPath);
+            if(remove(fullPath) == -1)
+            {
+                syslog(LOG_ERR, "Deleting %s failed: Error occurred during deleting.", fullPath);
+                ret = -1;
+            }else
+                syslog(LOG_INFO, "Deleting %s succesed.", fullPath);
             destroy(subList);
             closedir(next);
         } 
