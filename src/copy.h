@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/mman.h>
+#include <syslog.h>
 #include "util.h"
 
 int copyFile(char *, char *, char *, int);

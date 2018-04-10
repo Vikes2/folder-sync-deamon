@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <syslog.h>
+#include <fcntl.h>
+#include <linux/fs.h>
 #include "list.h"
 #include "sync.h"
 #include "copy.h"
@@ -86,6 +88,8 @@ int initParams(int argc, char** argv, char** source, char** destination, int* ti
 
 int main(int argc, char** argv)
 {
+    pid_t pid;
+    int i;
     char* sourceDirPath;
     char* destinationDirPath;
     int time = 300;
@@ -98,16 +102,45 @@ int main(int argc, char** argv)
        exit(EXIT_FAILURE);
     }
 
-    //openlog("test", LOG_PID, LOG_USER);
-    syslog(LOG_INFO, "Start logging");
-    closelog();
-
-    if(syncFiles(sourceDirPath, destinationDirPath, sizeTh, isRecursive) == -1)
+    pid = fork();
+    if(pid == -1)
     {
-        printf("sync wrong\n");
-        return 0;
+        return -1;
+    }
+    else if(pid != 0)
+    {
+        exit(EXIT_SUCCESS);
     }
 
+    if(setsid() == -1)
+    {
+        return -1;
+    }
 
+    for(i = 0; i <  sysconf(_SC_OPEN_MAX); i++)
+    {
+        close(i);
+    }
+
+    open("/dev/null", O_RDWR);
+    dup(0);
+    dup(0);
+
+    openlog("test", LOG_PID, LOG_USER);
+    
+    while(1)
+    {
+        syslog(LOG_INFO, "Deamon has been started automatically.");
+
+        if(syncFiles(sourceDirPath, destinationDirPath, sizeTh, isRecursive) == -1)
+        {
+            syslog(LOG_ERR, "Synchronization failed.");
+            return 0;
+        }
+
+        sleep(time);
+    }
+
+    closelog();
     return 0;
 }   

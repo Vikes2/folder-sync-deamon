@@ -6,11 +6,12 @@ int mmapCopyFile(char *sourceFile, char *destinationFile)
     struct stat sb;
     size_t fileSize;
     int *sc, *dc;
-
+    int ret;
+    
     // If error occurred during opening a source file, return -1.
     if((source = open(sourceFile, O_RDONLY)) == -1)
     {
-        perror(sourceFile);
+        syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during opening %s", sourceFile, destinationFile, sourceFile);
         return -1;
     }
 
@@ -20,33 +21,34 @@ int mmapCopyFile(char *sourceFile, char *destinationFile)
     //If error occurred during opening a destination file, return -1.
     if((dest = open(destinationFile, O_CREAT | O_RDWR | O_TRUNC, sb.st_mode)) == -1)
     {
-        perror(destinationFile);
+        syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during opening %s", sourceFile, destinationFile, destinationFile);
         return -1;   
     }
 
     //If error occurred during mapping a source file to the memory, return -1.
     if((sc = mmap(NULL, fileSize, PROT_READ, MAP_PRIVATE, source, 0)) == MAP_FAILED)
     {
-        fprintf(stderr, "Error mapping source file: %s\n", sourceFile);
+        syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during mapping %s", sourceFile, destinationFile, sourceFile);
         return -1;
     }
 
     if(ftruncate(dest, fileSize) == -1)
     {
+        syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during truncating %s", sourceFile, destinationFile, destinationFile);
         return -1;
     }
 
     //If error occurred during mapping a destination file to the memory, return -1.
     if((dc = mmap(NULL, fileSize, PROT_READ | PROT_WRITE, MAP_SHARED, dest, 0)) == MAP_FAILED)
     {
-        fprintf(stderr, "Error mapping destination file: %s\n", destinationFile);
+        syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during mapping %s", sourceFile, destinationFile, destinationFile);
         return -1;
     }
 
     //If error occurred during copying files, return -1.
     if(memcpy(dc, sc, fileSize) == NULL)
     {
-        perror("d");
+        syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during copying", sourceFile, destinationFile);
         return -1;
     }
 
@@ -56,6 +58,7 @@ int mmapCopyFile(char *sourceFile, char *destinationFile)
     close(source);
     close(dest);
 
+    syslog(LOG_INFO, "Copying %s to %s succeed", sourceFile, destinationFile);
     return fileSize;
 }
 
@@ -63,13 +66,14 @@ int standardCopyFile(char *sourceFile, char *destinationFile)
 {
     int source, destination;
     size_t bytesRead, bytesWritten;
+    int fileSize = 0;
     char *buffer;
     struct stat sb;
 
     //If an error occurred during opening source file, return -1.
     if((source = open(sourceFile, O_RDONLY)) == -1)
     {
-        fprintf(stderr, "Error opening source file %s\n", sourceFile);
+        syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during opening %s", sourceFile, destinationFile, sourceFile);
         return -1;
     }
 
@@ -78,7 +82,7 @@ int standardCopyFile(char *sourceFile, char *destinationFile)
     //If an error occurred during opening destination file, return -1.
     if((destination = open(destinationFile, O_CREAT | O_WRONLY | O_TRUNC, sb.st_mode)) == -1)
     {
-        fprintf(stderr, "Error opening destination file %s\n", destinationFile);
+        syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during opening %s", sourceFile, destinationFile, destinationFile);
         return -1;
     }
 
@@ -91,7 +95,7 @@ int standardCopyFile(char *sourceFile, char *destinationFile)
             {
                 continue;
             }
-            perror("read");
+            syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during reading %s", sourceFile, destinationFile, sourceFile);
             break;
         }
 
@@ -102,20 +106,25 @@ int standardCopyFile(char *sourceFile, char *destinationFile)
             {
                 continue;
             }
-            perror("write");
+            syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during writing %s", sourceFile, destinationFile, destinationFile);
             break;
         }
 
         if(bytesWritten != bytesRead)
         {
-            fprintf(stderr, "Error while copying files %s to %s\n", sourceFile, destinationFile);
+            syslog(LOG_ERR, "Copying %s to %s failed: Error occurred during copying", sourceFile, destinationFile);
             return -1;
         }
+
+        fileSize += bytesRead;
     }
 
     close(source);
     close(destination);
     free(buffer);
+
+    syslog(LOG_ERR, "Copying %s to %s succeed.", sourceFile, destinationFile);
+    return fileSize;
 }
 
 int copyFile(char *_sourcePath, char *_destPath, char *fileName, int sizeTh)
@@ -174,7 +183,13 @@ int copyDirectory(char *_sourceDirectoryPath, char* _destinationDirectoryPath, c
         //If current element is a directory
         else if(entry->d_type == 4)
         {
-            copyDirectory(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh);
+            if((copyDirectory(sourceDirectoryPath, destinationDirectoryPath, entry->d_name, sizeTh)) != -1)
+            {
+                syslog(LOG_INFO, "Copying %s to %s succeed.", sourceDirectoryPath, destinationDirectoryPath);
+            }
+            else{
+                syslog(LOG_ERR, "Copying %s to %s failed: directory exitsts.", sourceDirectoryPath, destinationDirectoryPath);
+            }
         }
     }
 
