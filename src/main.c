@@ -8,11 +8,14 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <syslog.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <linux/fs.h>
 #include "list.h"
 #include "sync.h"
 #include "copy.h"
+
+int autod = 1;
 
 int initParams(int argc, char** argv, char** source, char** destination, int* time, size_t* size, int* isRecursive);
 
@@ -86,6 +89,19 @@ int initParams(int argc, char** argv, char** source, char** destination, int* ti
     return optind;
 }
 
+void SignalHandler(int signo) {
+	switch (signo) {
+	case SIGUSR1:
+		syslog(LOG_INFO, "Received SIGUSR1. Process awakened by user.");
+        autod = 0;
+		break;
+	case SIGTERM:
+		syslog(LOG_INFO, "Received SIGTERM. Process terminated by user.");
+		exit(EXIT_SUCCESS);
+		break;
+	}
+}
+
 int main(int argc, char** argv)
 {
     pid_t pid;
@@ -96,6 +112,16 @@ int main(int argc, char** argv)
     int time = 300;
     size_t sizeTh = 1073741824;
     int isRecursive = 0;
+
+    if (signal(SIGUSR1, &SignalHandler) == SIG_ERR) {   //  Ustawienie handlera sygnału SIGUSR1
+		perror("signal()");
+		exit(EXIT_FAILURE);
+	}
+
+	if (signal(SIGTERM, &SignalHandler) == SIG_ERR) {   //  Ustawienie handlera sygnału SIGTERM
+		perror("signal()");
+		exit(EXIT_FAILURE);
+    }
 
     if(initParams(argc, argv, &sourceDirPath, &destinationDirPath, &time, &sizeTh, &isRecursive) >= argc)
     {
@@ -126,11 +152,13 @@ int main(int argc, char** argv)
     open("/dev/null", O_RDWR);
     dup(0);
     dup(0);
+    chdir("/");
 
-    openlog("test", LOG_PID, LOG_USER);
+    openlog("sync", LOG_PID, LOG_USER);
     
     while(1)
     {
+        if(autod)
         syslog(LOG_INFO, "Deamon has been started automatically.");
 
         if(syncFiles(sourceDirPath, destinationDirPath, sizeTh, isRecursive) == -1)
@@ -140,7 +168,8 @@ int main(int argc, char** argv)
             break;
         }
 
-        syslog(LOG_INFO, "Deamon is awaiting...");
+        syslog(LOG_INFO, "Deamon is sleeping for %d seconds...", time);
+        autod = 1;
         sleep(time);
     }
 
