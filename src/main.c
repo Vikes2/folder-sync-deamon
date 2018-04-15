@@ -19,7 +19,6 @@ int autod = 1;
 
 int initParams(int argc, char** argv, char** source, char** destination, int* time, size_t* size, int* isRecursive);
 
-
 int initParams(int argc, char** argv, char** source, char** destination, int* time, size_t* size, int* isRecursive)
 {
     int opt;
@@ -89,7 +88,8 @@ int initParams(int argc, char** argv, char** source, char** destination, int* ti
     return optind;
 }
 
-void SignalHandler(int signo) {
+void signalHandler(int signo) 
+{
 	switch (signo) {
 	case SIGUSR1:
 		syslog(LOG_INFO, "Received SIGUSR1. Process awakened by user.");
@@ -102,37 +102,15 @@ void SignalHandler(int signo) {
 	}
 }
 
-int main(int argc, char** argv)
+void deamonize()
 {
-    pid_t pid;
     int i;
-    int ret;
-    char* sourceDirPath;
-    char* destinationDirPath;
-    int time = 300;
-    size_t sizeTh = 1073741824;
-    int isRecursive = 0;
+    pid_t pid;
 
-    if (signal(SIGUSR1, &SignalHandler) == SIG_ERR) {   //  Ustawienie handlera sygnału SIGUSR1
-		perror("signal()");
-		exit(EXIT_FAILURE);
-	}
-
-	if (signal(SIGTERM, &SignalHandler) == SIG_ERR) {   //  Ustawienie handlera sygnału SIGTERM
-		perror("signal()");
-		exit(EXIT_FAILURE);
-    }
-
-    if(initParams(argc, argv, &sourceDirPath, &destinationDirPath, &time, &sizeTh, &isRecursive) >= argc)
-    {
-       fprintf(stderr, "Expected argument after options\n");
-       exit(EXIT_FAILURE);
-    }
-    ret = 0;
     pid = fork();
     if(pid == -1)
     {
-        return 1;
+        exit(EXIT_FAILURE);
     }
     else if(pid != 0)
     {
@@ -141,7 +119,7 @@ int main(int argc, char** argv)
 
     if(setsid() == -1)
     {
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     for(i = 0; i <  sysconf(_SC_OPEN_MAX); i++)
@@ -155,6 +133,35 @@ int main(int argc, char** argv)
     chdir("/");
 
     openlog("sync", LOG_PID, LOG_USER);
+}
+
+int main(int argc, char** argv)
+{
+    int ret;
+    char* sourceDirPath;
+    char* destinationDirPath;
+    int time = 300;
+    size_t sizeTh = 1073741824;
+    int isRecursive = 0;
+
+    if (signal(SIGUSR1, &signalHandler) == SIG_ERR) {   //  Ustawienie handlera sygnału SIGUSR1
+		perror("signal()");
+		exit(EXIT_FAILURE);
+	}
+
+	if (signal(SIGTERM, &signalHandler) == SIG_ERR) {   //  Ustawienie handlera sygnału SIGTERM
+		perror("signal()");
+		exit(EXIT_FAILURE);
+    }
+
+    if(initParams(argc, argv, &sourceDirPath, &destinationDirPath, &time, &sizeTh, &isRecursive) >= argc)
+    {
+       fprintf(stderr, "Expected argument after options\n");
+       exit(EXIT_FAILURE);
+    }
+    ret = 0;
+
+    deamonize();
     
     while(1)
     {
@@ -173,6 +180,5 @@ int main(int argc, char** argv)
         sleep(time);
     }
 
-    closelog();
     return ret;
 }   
