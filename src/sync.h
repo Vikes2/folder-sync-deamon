@@ -15,7 +15,7 @@
 
 /** 
  * @brief  Checks if both directories contain the same file.
- * @note   Uses file name, file type and modify time to decide if there are differences and what to do with that.
+ * @note   Uses a file name, a file type, modify time to decide if there are differences.
  * @param  sourceDirPath: char *
  * @param  destinationDirPath: char *
  * @param  element: Node *
@@ -28,7 +28,7 @@
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list);
 
 /** 
- * @brief  Synchronize two directories.
+ * @brief  Synchronizes two directories.
  * @note   If a file in the source directory has different size or modify time, then algorithm copies its to the destination directory.
  *         The same action is raised when there's no file in the destination directory. Any changes in the destination directory are
  *         not allowed, therfore the application removes files existing only in the destination directory or replaces them.

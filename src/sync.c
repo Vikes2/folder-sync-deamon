@@ -2,7 +2,6 @@
 
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list)
 {
-    //return: 0 the same, 1 diffrent, -1 no file, 2 error
     if(valueExists(element->fileName,element->fileType,list) == 0)
     {
         return -1;
@@ -65,21 +64,25 @@ int syncFiles(char *sourceDirPath, char *destinationDirPath, size_t sizeTH, int 
     {
         current = popElement(listS);
         int compareStatus = compare(sourceDirPath, destinationDirPath, current, listD);
-        if (compareStatus == -1) //nie ma obiektu w dest
+        //The object doesn`t exist in the destination path.
+        if (compareStatus == -1)
         {
-            if(current->fileType == 4 && isRecursive == 1) // czy Directory
+            // Checking if the object is a directory and it is in a recursive mode.
+            if(current->fileType == 4 && isRecursive == 1)
             {
                 ret = copyDirectory(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
             }
-            else                     // zwkly plik cp dla -1
+            else
             {
                 ret = copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
             }
 
         }
-        else if(compareStatus == 1) // obiekty są ale są rozne (1)
+        //The object exists in the destination path, but it has a different content.
+        else if(compareStatus == 1)
         {
-            if(current->fileType == 4 && isRecursive == 1) // czy Directory
+            // Checking if the object is a directory and it is in a recursive mode.
+            if(current->fileType == 4 && isRecursive == 1)
             {
                 pathSource = joinToPath(sourceDirPath,current->fileName);
                 pathDestination = joinToPath(destinationDirPath,current->fileName);
