@@ -1,106 +1,102 @@
 #include "sync.h"
 
-
-
-int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list);
-
-
 int compare(char* sourceDirPath, char* destinationDirPath, Node* element, List * list)
 {
-    //return: 0 the same, 1 diffrent, -1 no file, 2 error
     if(valueExists(element->fileName,element->fileType,list) == 0)
     {
         return -1;
     }
+    int ret;
     struct stat sb;
     struct stat db;
-    char* pathSource = mergeStrings(sourceDirPath,element->fileName);
-    char* pathDestination = mergeStrings(destinationDirPath,element->fileName);
+    char* pathSource = joinToPath(sourceDirPath, element->fileName);
+    char* pathDestination = joinToPath(destinationDirPath, element->fileName);
 
     if(stat(pathSource,&sb) == 0 && stat(pathDestination,&db) == 0)
     {
-
         if(sb.st_mtime == db.st_mtime)
-            return 0;
+            ret = 0;
         else
-            return 1;
-    }else
+            ret = 1;
+    }
+    else
     {
-        syslog(LOG_ERR, "Cannot get access to file.");
-        return 2;
+        syslog(LOG_ERR, "stat() %s", strerror(errno));
+        ret = 2;
     }
    
+    free(pathSource);
+    free(pathDestination);
+
+    return ret;
 }
 
-int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int isRecursive)
+int syncFiles(char *sourceDirPath, char *destinationDirPath, size_t sizeTH, int isRecursive)
 {
     int ret = 0;
+    DIR *source, *dest;
+    List *listS, *listD;
+    char *pathSource, *pathDestination;
+    Node *current;
 
-	DIR *source = opendir(sourceDirPath);
-    if (source == NULL)
+    if ((source = opendir(sourceDirPath)) == NULL)
     {
-        syslog(LOG_ERR, "Error occurred during opening %s.", sourceDirPath);
-        return -1;
-    }
-    DIR *dest = opendir(destinationDirPath);
-    if (dest == NULL)
-    {
-        syslog(LOG_ERR, "Error occurred during opening %s.", destinationDirPath);
+        syslog(LOG_ERR, "Sync failed; opendir() \"%s\" %s.", sourceDirPath, strerror(errno));
         return -1;
     }
 
-    List * listS = emptylist();
-    List * listD = emptylist();
+    if ((dest = opendir(destinationDirPath)) == NULL)
+    {
+        syslog(LOG_ERR, "Sync failed; opendir() \"%s\" %s.", destinationDirPath, strerror(errno));
+        return -1;
+    }
+
+    listS = emptyList();
+    listD = emptyList();
 
     loadData(listS, source);
     loadData(listD, dest);
 
-    if(listS == NULL && listD == NULL)
+    if(listS->head == NULL && listD->head == NULL)
         return ret;
-
-    char* pathSource;
-    char* pathDestination;
-
-    Node * current;
 
     while(listS->head != NULL)
     {
         current = popElement(listS);
         int compareStatus = compare(sourceDirPath, destinationDirPath, current, listD);
-        if (compareStatus == -1) //nie ma obiektu w dest
+        //The object doesn`t exist in the destination path.
+        if (compareStatus == -1)
         {
-            if(current->fileType == 4) // czy Directory
+            // Checking if the object is a directory and it is in a recursive mode.
+            if(current->fileType == 4 && isRecursive == 1)
             {
-
-                if(isRecursive == 1)// czy cp wszystko czy tylko files
-                {
-                    //copy whole Directory
-                    ret = copyDirectory(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
-                }
-
-
-            }else                     // zwkly plik cp dla -1
-            {
-                ret = copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
-            }
-
-        }else if(compareStatus == 1) // obiekty są ale są rozne (1)
-        {
-            if(current->fileType == 4) // czy Directory
-            {
-                if(isRecursive == 1)
-                {
-                    pathSource = mergeStrings(sourceDirPath,current->fileName);
-                    pathDestination = mergeStrings(destinationDirPath,current->fileName);
-                    ret = syncFiles(pathSource, pathDestination, sizeTH, isRecursive);
-                    syncFilesDate(pathSource, pathDestination);
-                }
+                ret = copyDirectory(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
             }
             else
             {
                 ret = copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
             }
-        }else if( compareStatus == 2)
+
+        }
+        //The object exists in the destination path, but it has a different content.
+        else if(compareStatus == 1)
+        {
+            // Checking if the object is a directory and it is in a recursive mode.
+            if(current->fileType == 4 && isRecursive == 1)
+            {
+                pathSource = joinToPath(sourceDirPath,current->fileName);
+                pathDestination = joinToPath(destinationDirPath,current->fileName);
+                ret = syncFiles(pathSource, pathDestination, sizeTH, isRecursive);
+                syncFilesDate(pathSource, pathDestination);
+                free(pathSource);
+                free(pathDestination);
+            }
+            else
+            {
+                ret = copyFile(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
+            }
+        }
+        else if(compareStatus == 2)
             ret = -1;
 
         deleteElement(current->fileName,listD);
@@ -109,8 +105,8 @@ int syncFiles(char* sourceDirPath, char* destinationDirPath, size_t sizeTH, int 
 
     ret = removeWholeList(destinationDirPath, listD);
 
-    destroy(listS);
-    destroy(listD);
+    destroy(&listS);
+    destroy(&listD);
 
     closedir(source);
     closedir(dest);

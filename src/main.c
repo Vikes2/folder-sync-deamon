@@ -8,14 +8,16 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <syslog.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <linux/fs.h>
 #include "list.h"
 #include "sync.h"
 #include "copy.h"
 
-int initParams(int argc, char** argv, char** source, char** destination, int* time, size_t* size, int* isRecursive);
+int autod = 1;
 
+int initParams(int argc, char** argv, char** source, char** destination, int* time, size_t* size, int* isRecursive);
 
 int initParams(int argc, char** argv, char** source, char** destination, int* time, size_t* size, int* isRecursive)
 {
@@ -86,27 +88,29 @@ int initParams(int argc, char** argv, char** source, char** destination, int* ti
     return optind;
 }
 
-int main(int argc, char** argv)
+void signalHandler(int signo) 
 {
-    pid_t pid;
-    int i;
-    int ret;
-    char* sourceDirPath;
-    char* destinationDirPath;
-    int time = 300;
-    size_t sizeTh = 1073741824;
-    int isRecursive = 0;
+	switch (signo) {
+	case SIGUSR1:
+		syslog(LOG_INFO, "Received SIGUSR1. Process awakened by user.");
+        autod = 0;
+		break;
+	case SIGTERM:
+		syslog(LOG_INFO, "Received SIGTERM. Process terminated by user.");
+		exit(EXIT_SUCCESS);
+		break;
+	}
+}
 
-    if(initParams(argc, argv, &sourceDirPath, &destinationDirPath, &time, &sizeTh, &isRecursive) >= argc)
-    {
-       fprintf(stderr, "Expected argument after options\n");
-       exit(EXIT_FAILURE);
-    }
-    ret = 0;
+void deamonize()
+{
+    int i;
+    pid_t pid;
+
     pid = fork();
     if(pid == -1)
     {
-        return 1;
+        exit(EXIT_FAILURE);
     }
     else if(pid != 0)
     {
@@ -115,7 +119,7 @@ int main(int argc, char** argv)
 
     if(setsid() == -1)
     {
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
     for(i = 0; i <  sysconf(_SC_OPEN_MAX); i++)
@@ -126,11 +130,42 @@ int main(int argc, char** argv)
     open("/dev/null", O_RDWR);
     dup(0);
     dup(0);
+    chdir("/");
 
-    openlog("test", LOG_PID, LOG_USER);
+    openlog("sync", LOG_PID, LOG_USER);
+}
+
+int main(int argc, char** argv)
+{
+    int ret;
+    char* sourceDirPath;
+    char* destinationDirPath;
+    int time = 300;
+    size_t sizeTh = 1073741824;
+    int isRecursive = 0;
+
+    if (signal(SIGUSR1, &signalHandler) == SIG_ERR) {   //  Ustawienie handlera sygnału SIGUSR1
+		perror("signal()");
+		exit(EXIT_FAILURE);
+	}
+
+	if (signal(SIGTERM, &signalHandler) == SIG_ERR) {   //  Ustawienie handlera sygnału SIGTERM
+		perror("signal()");
+		exit(EXIT_FAILURE);
+    }
+
+    if(initParams(argc, argv, &sourceDirPath, &destinationDirPath, &time, &sizeTh, &isRecursive) >= argc)
+    {
+       fprintf(stderr, "Expected argument after options\n");
+       exit(EXIT_FAILURE);
+    }
+    ret = 0;
+
+    deamonize();
     
     while(1)
     {
+        if(autod)
         syslog(LOG_INFO, "Deamon has been started automatically.");
 
         if(syncFiles(sourceDirPath, destinationDirPath, sizeTh, isRecursive) == -1)
@@ -140,10 +175,10 @@ int main(int argc, char** argv)
             break;
         }
 
-        syslog(LOG_INFO, "Deamon is awaiting...");
+        syslog(LOG_INFO, "Deamon is sleeping for %d seconds...", time);
+        autod = 1;
         sleep(time);
     }
 
-    closelog();
     return ret;
 }   

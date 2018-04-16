@@ -1,6 +1,6 @@
 #include "util.h"
 
-char *mergeStrings(char *string1, char *string2)
+char *joinToPath(char *string1, char *string2)
 {
     char *result = (char *) malloc(2+ strlen(string1) + strlen(string2));
     strcpy(result,string1);
@@ -20,8 +20,11 @@ int syncFilesDate(char *sourcePath, char *destPath)
 	newTime.modtime = sb.st_mtime;
 	if (utime(destPath, &newTime) == -1) 
     {
+        syslog(LOG_ERR, "utime(): \"%s\" %s", sourcePath, strerror(errno));        
 		return -1;
 	}
+
+    return 0;
 }
 
 void loadData(List * list, DIR * dir)
@@ -41,12 +44,14 @@ void loadData(List * list, DIR * dir)
 int removeWholeList(char *path, List * list)
 {
     Node *current;
-    char* fullPath;
+    DIR *next;
+    List *subList;
+    char *fullPath;
     int ret = 0;
     while(list->head != NULL)
     {
         current = popElement(list);
-        fullPath= mergeStrings(path, current->fileName);
+        fullPath= joinToPath(path, current->fileName);
         if(current->fileType != 4)
         {
             if(remove(fullPath) == -1)
@@ -54,29 +59,31 @@ int removeWholeList(char *path, List * list)
                 syslog(LOG_ERR, "Deleting %s failed: Error occurred during deleting.", fullPath);
                 ret = -1;
             }else
-                syslog(LOG_INFO, "Deleting %s succesed.", fullPath);
+                syslog(LOG_INFO, "Deleting %s succeed.", fullPath);
         }
         else
         {
-            DIR *next = opendir(fullPath);
-            if (next == NULL)
+            if ((next = opendir(fullPath)) == NULL)
             {
                 syslog(LOG_ERR, "Deleting %s failed: Error occurred during opening %s.", fullPath, fullPath);
+                free(current);
+                free(fullPath);
                 return -1;
             }
-            List * subList = emptylist();
+            subList = emptyList();
             loadData(subList, next);
-            ret= removeWholeList(fullPath, subList);
+            ret = removeWholeList(fullPath, subList);
             if(remove(fullPath) == -1)
             {
                 syslog(LOG_ERR, "Deleting %s failed: Error occurred during deleting.", fullPath);
                 ret = -1;
             }else
-                syslog(LOG_INFO, "Deleting %s succesed.", fullPath);
-            destroy(subList);
+                syslog(LOG_INFO, "Deleting %s succeed.", fullPath);
+            destroy(&subList);
             closedir(next);
-        } 
+        }
+        free(current); 
+        free(fullPath);
     }
-    
     return ret;
 }
