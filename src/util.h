@@ -47,6 +47,6 @@ void loadData(List *list, DIR *dir);
  * @param  list: List *
  * @retval 0 - if no errors found, 1 - if an error has occurred.
  */
-int removeWholeList(char *path, List * list);
+int removeWholeList(char *path, List * list, int isRecursive);
 
 #endif

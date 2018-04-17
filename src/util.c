@@ -41,7 +41,7 @@ void loadData(List * list, DIR * dir)
 }
 
 
-int removeWholeList(char *path, List * list)
+int removeWholeList(char *path, List * list, int isRecursive)
 {
     Node *current;
     DIR *next;
@@ -63,7 +63,9 @@ int removeWholeList(char *path, List * list)
         }
         else
         {
-            if ((next = opendir(fullPath)) == NULL)
+            if(isRecursive == 1)
+            {
+                if ((next = opendir(fullPath)) == NULL)
             {
                 syslog(LOG_ERR, "Deleting %s failed: Error occurred during opening %s.", fullPath, fullPath);
                 free(current);
@@ -72,7 +74,7 @@ int removeWholeList(char *path, List * list)
             }
             subList = emptyList();
             loadData(subList, next);
-            ret = removeWholeList(fullPath, subList);
+            ret = removeWholeList(fullPath, subList, isRecursive);
             if(remove(fullPath) == -1)
             {
                 syslog(LOG_ERR, "Deleting %s failed: Error occurred during deleting.", fullPath);
@@ -81,6 +83,7 @@ int removeWholeList(char *path, List * list)
                 syslog(LOG_INFO, "Deleting %s succeed.", fullPath);
             destroy(&subList);
             closedir(next);
+            }
         }
         free(current); 
         free(fullPath);

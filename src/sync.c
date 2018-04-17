@@ -67,10 +67,13 @@ int syncFiles(char *sourceDirPath, char *destinationDirPath, size_t sizeTH, int 
         //The object doesn`t exist in the destination path.
         if (compareStatus == -1)
         {
-            // Checking if the object is a directory and it is in a recursive mode.
-            if(current->fileType == 4 && isRecursive == 1)
+            // Checking if the object is a directory 
+            if(current->fileType == 4) 
             {
-                ret = copyDirectory(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
+                if(isRecursive == 1)
+                {
+                    ret = copyDirectory(sourceDirPath, destinationDirPath, current->fileName, sizeTH);
+                }
             }
             else
             {
@@ -81,15 +84,19 @@ int syncFiles(char *sourceDirPath, char *destinationDirPath, size_t sizeTH, int 
         //The object exists in the destination path, but it has a different content.
         else if(compareStatus == 1)
         {
-            // Checking if the object is a directory and it is in a recursive mode.
-            if(current->fileType == 4 && isRecursive == 1)
+            // Checking if the object is a directory 
+            if(current->fileType == 4)
             {
-                pathSource = joinToPath(sourceDirPath,current->fileName);
-                pathDestination = joinToPath(destinationDirPath,current->fileName);
-                ret = syncFiles(pathSource, pathDestination, sizeTH, isRecursive);
-                syncFilesDate(pathSource, pathDestination);
-                free(pathSource);
-                free(pathDestination);
+                // Checking if the object is in a recursive mode.
+                if(isRecursive == 1)
+                {
+                    pathSource = joinToPath(sourceDirPath,current->fileName);
+                    pathDestination = joinToPath(destinationDirPath,current->fileName);
+                    ret = syncFiles(pathSource, pathDestination, sizeTH, isRecursive);
+                    syncFilesDate(pathSource, pathDestination);
+                    free(pathSource);
+                    free(pathDestination);
+                }
             }
             else
             {
@@ -103,7 +110,7 @@ int syncFiles(char *sourceDirPath, char *destinationDirPath, size_t sizeTH, int 
         free(current);
     }
 
-    ret = removeWholeList(destinationDirPath, listD);
+    ret = removeWholeList(destinationDirPath, listD, isRecursive);
 
     destroy(&listS);
     destroy(&listD);
