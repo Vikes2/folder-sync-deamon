@@ -28,6 +28,12 @@ int initParams(int argc, char** argv, char** source, char** destination, int* ti
     *source = argv[1];
     *destination = argv[2];
 
+    if(argc < 3) //at least 3 arguments are necessary, e.g. ./sync source destination 
+    {
+        fprintf(stderr, "Usage: %s source destination [-t secs] [-s size] [-R]\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
     if((dir = opendir(*source)) == NULL)
     {
         if(errno == ENOTDIR){
@@ -53,12 +59,6 @@ int initParams(int argc, char** argv, char** source, char** destination, int* ti
     }
 
     closedir(dir);
-
-    if(argc < 3) //at least 3 arguments are necessary, e.g. ./sync source destination 
-    {
-        fprintf(stderr, "Usage: %s source destination [-t secs] [-s size] [-R]\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
 
     if(strcmp(*source, *destination) == 0) // source and destination have to be different directories
     {
